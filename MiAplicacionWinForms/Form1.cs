@@ -116,7 +116,7 @@ public partial class Form1 : Form
         try
         {
             using var client = new HttpClient();
-            string url = $"http://localhost:5000/api/casos?documento={texto}";
+            string url = $"http://localhost:5000/api/casos?documento={Uri.EscapeDataString(texto)}";
 
             var response = await client.GetAsync(url);
             if (response.IsSuccessStatusCode)
@@ -150,9 +150,15 @@ public partial class Form1 : Form
             }
             else
             {
+                var errorContent = await response.Content.ReadAsStringAsync();
                 LimpiarCampos();
-                lblEstadoBusqueda.Text = "Error al consultar la API.";
+                lblEstadoBusqueda.Text = $"Error de API ({(int)response.StatusCode}).";
                 lblEstadoBusqueda.ForeColor = Color.Red;
+                MessageBox.Show(
+                    $"La API devolvió {(int)response.StatusCode} ({response.ReasonPhrase}).\n\n{errorContent}",
+                    "Error de API",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
         catch (Exception ex)
@@ -197,5 +203,5 @@ public class CasoResponseDto
     public string Descripcion { get; set; } = string.Empty;
 
     [JsonPropertyName("fecha_registro")]
-    public DateTime FechaRegistro { get; set; }
+    public DateTime? FechaRegistro { get; set; }
 }

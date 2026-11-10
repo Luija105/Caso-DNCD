@@ -36,3 +36,4 @@ C:\Users\LUIJA\Desktop\Proyecto UCSD\Caso DNCD\ApiDncdCaso\obj\Debug\net10.0\ref
 C:\Users\LUIJA\Desktop\Proyecto UCSD\Caso DNCD\ApiDncdCaso\obj\Debug\net10.0\ApiDncdCaso.pdb
 C:\Users\LUIJA\Desktop\Proyecto UCSD\Caso DNCD\ApiDncdCaso\obj\Debug\net10.0\ApiDncdCaso.genruntimeconfig.cache
 C:\Users\LUIJA\Desktop\Proyecto UCSD\Caso DNCD\ApiDncdCaso\obj\Debug\net10.0\ref\ApiDncdCaso.dll
+C:\Users\LUIJA\Desktop\Proyecto UCSD\Caso DNCD\ApiDncdCaso\obj\Debug\net10.0\ApiDncdCaso.sourcelink.json
