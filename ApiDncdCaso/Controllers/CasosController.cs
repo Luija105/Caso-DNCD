@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using ApiDncdCaso.Models;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -58,6 +60,70 @@ public async Task<IActionResult> Get([FromQuery] string? documento)
     }
 }
 
+[HttpPost]
+public async Task<IActionResult> Create([FromBody] CasoDto caso)
+{
+    var supabaseUrl = _configuration["Supabase:Url"];
+    var supabaseKey = _configuration["Supabase:Key"];
+
+    if (string.IsNullOrWhiteSpace(supabaseUrl) || string.IsNullOrWhiteSpace(supabaseKey))
+    {
+        _logger.LogError("La configuración de Supabase está incompleta.");
+        return StatusCode(500, new { error = "La configuración de Supabase está incompleta." });
+    }
+
+    try
+    {
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Add("apikey", supabaseKey);
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {supabaseKey}");
+        client.DefaultRequestHeaders.Add("Prefer", "return=representation");
+
+        caso.NumeroExpediente = await GenerarNumeroExpedienteAsync(client, supabaseUrl, supabaseKey);
+        var json = JsonSerializer.Serialize(caso);
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var response = await client.PostAsync($"{supabaseUrl}/rest/v1/casos_dncd", content);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Error al crear caso en Supabase: {error}", responseContent);
+            return StatusCode((int)response.StatusCode, new { error = responseContent });
+        }
+
+        return Content(responseContent, "application/json", System.Text.Encoding.UTF8);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Excepción al crear caso en Supabase.");
+        return StatusCode(500, new { error = "No fue posible crear el caso." });
+    }
+}
+
+private async Task<string> GenerarNumeroExpedienteAsync(HttpClient client, string supabaseUrl, string supabaseKey)
+{
+    var year = DateTime.UtcNow.Year;
+    var url = $"{supabaseUrl}/rest/v1/casos_dncd?select=numero_expediente&numero_expediente=like.EXP-{year}-*";
+    var response = await client.GetAsync(url);
+    var responseContent = await response.Content.ReadAsStringAsync();
+
+    if (!response.IsSuccessStatusCode)
+    {
+        _logger.LogError("Error al obtener expedientes existentes: {error}", responseContent);
+        throw new InvalidOperationException("No fue posible generar el número de expediente.");
+    }
+
+    var expedientes = JsonSerializer.Deserialize<List<ExpedienteExistenteDto>>(responseContent) ?? [];
+    var ultimoNumero = expedientes
+        .Select(x => Regex.Match(x.NumeroExpediente ?? string.Empty, $"^EXP-{year}-(\\d+)$"))
+        .Where(match => match.Success)
+        .Select(match => int.Parse(match.Groups[1].Value))
+        .DefaultIfEmpty(0)
+        .Max();
+
+    return $"EXP-{year}-{ultimoNumero + 1:D3}";
+}
+
 // DTO para mapear la respuesta
 // DTO para mapear la respuesta
     public class CasoResponseDto
@@ -82,6 +148,12 @@ public async Task<IActionResult> Get([FromQuery] string? documento)
 
         [JsonPropertyName("fecha_registro")]
         public DateTime FechaRegistro { get; set; }
+    }
+
+    private sealed class ExpedienteExistenteDto
+    {
+        [JsonPropertyName("numero_expediente")]
+        public string? NumeroExpediente { get; set; }
     }
 }
     

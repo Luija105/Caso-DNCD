@@ -89,6 +89,22 @@ public partial class Form1 : Form
         this.Controls.Add(lblEstadoBusqueda);
         this.Controls.Add(lblDescTitle);
         this.Controls.Add(txtDescripcionVal);
+
+        var btnAbrirCrearCaso = new Button
+        {
+            Text = "Crear nuevo caso",
+            Location = new Point(20, 355),
+            Width = 150,
+            BackColor = Color.FromArgb(0, 120, 212),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
+        };
+        btnAbrirCrearCaso.Click += (_, _) =>
+        {
+            using var crearCasoForm = new CrearCasoForm();
+            crearCasoForm.ShowDialog(this);
+        };
+        this.Controls.Add(btnAbrirCrearCaso);
     }
 
     private void CrearFilaDetalle(string etiqueta, ref int y, out Label lblValor)
@@ -179,6 +195,7 @@ public partial class Form1 : Form
         lblEstadoVal.Text = "---";
         txtDescripcionVal.Text = string.Empty;
     }
+
 }
 
 // Estructura de datos que recibe el JSON de la API
@@ -204,4 +221,22 @@ public class CasoResponseDto
 
     [JsonPropertyName("fecha_registro")]
     public DateTime? FechaRegistro { get; set; }
+}
+
+public class CasoDto
+{
+    [JsonPropertyName("numero_expediente")]
+    public string NumeroExpediente { get; set; } = string.Empty;
+
+    [JsonPropertyName("nombre_ciudadano")]
+    public string NombreCiudadano { get; set; } = string.Empty;
+
+    [JsonPropertyName("documento_identidad")]
+    public string DocumentoIdentidad { get; set; } = string.Empty;
+
+    [JsonPropertyName("tipo_caso")]
+    public string TipoCaso { get; set; } = string.Empty;
+
+    [JsonPropertyName("descripcion")]
+    public string Descripcion { get; set; } = string.Empty;
 }
